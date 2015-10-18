@@ -1,26 +1,23 @@
 package space_fighter_test_3d.gameWorld.entities.ships;
 
 import java.util.EventListener;
-import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Environment;
 import space_fighter_test_3d.gameWorld.entities.EntityObject;
 import space_fighter_test_3d.gameWorld.entities.ships.builders.ShipEntityBuilder;
 import space_fighter_test_3d.gameWorld.entities.ships.events.ShipEntityEventListener;
+import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
 /**
  * <p>
  * ShipEntities are craft which fly through 3D space.</p>
  *
  * @author Dynisious 06/10/2015
  * @version 0.0.1
- * @param <Child>      The Type of ShipEntity to assign to the ShipController.
  * @param <Controller> The Type of ShipController to be stored in this
  *                     ShipEntity.
- * @param <Enviro>     The type of Environment used in update events.
  */
-public abstract class ShipEntity<Child extends ShipEntity, Controller extends ShipController<Child>, Enviro extends Environment>
-        extends EntityObject<ShipEntityEventListener, Enviro> {
+public abstract class ShipEntity extends EntityObject {
     protected FPoint3D linearForcesIncrement; //The linear forces of this ShipEntity along
     //each axis relative to the ships orientaion.
     public FPoint3D getLinearForcesIncrement() {
@@ -47,7 +44,7 @@ public abstract class ShipEntity<Child extends ShipEntity, Controller extends Sh
      * @param builder                  The ShipEntityBuilder which produced
      *                                 this ShipEntity.
      * @param mass                     The mass of this ShipEntity.
-     * @param vertexes                 The vertexes which make up this
+     * @param triangles                The vertexes which make up this
      *                                 ShipEntity.
      * @param location                 The location of this ShipEntity in 3D
      *                                 space.
@@ -71,7 +68,7 @@ public abstract class ShipEntity<Child extends ShipEntity, Controller extends Sh
      * @param controller               the value of controller
      */
     protected ShipEntity(final ShipEntityBuilder builder, final double mass,
-                         final Point3D[] vertexes, final FPoint3D location,
+                         final Triangle[] triangles, final FPoint3D location,
                          final FPoint3D rotation, final FPoint3D velocity,
                          final FPoint3D rotationalSpeed,
                          final FPoint3D linearForces,
@@ -82,8 +79,8 @@ public abstract class ShipEntity<Child extends ShipEntity, Controller extends Sh
                          final FPoint3D maxMagnituidTorques,
                          final FPoint3D torquesIncrement,
                          final FPoint3D maxTorquesIncrement,
-                         final Controller controller) {
-        super(builder, mass, vertexes, location, rotation, velocity,
+                         final ShipController controller) {
+        super(builder, mass, triangles, location, rotation, velocity,
                 rotationalSpeed, linearForces, maxMagnituidLinearForces, torques,
                 maxMagnituidTorques);
         this.linearForcesIncrement = linearForcesIncrement;
@@ -101,7 +98,7 @@ public abstract class ShipEntity<Child extends ShipEntity, Controller extends Sh
      * @param controller The new ShipController.
      */
     public final void fireShipEntityControllerSetEvent(
-            final Controller controller) {
+            final ShipController controller) {
         addListener(controller);
         for (final EventListener l : getListeners()) {
             ((ShipEntityEventListener) l).handleShipControllerSetEvent(
@@ -110,7 +107,7 @@ public abstract class ShipEntity<Child extends ShipEntity, Controller extends Sh
     }
 
     @Override
-    public void firePhysicsObjectUpdateEvent(final Enviro environment) {
+    public void firePhysicsObjectUpdateEvent(final Environment environment) {
         synchronized (valuesLock) {
             linearForces = linearForces.addition(linearForcesIncrement);
             if (maxMagnituidLinearForces.x < Math.abs(linearForces.x)) {

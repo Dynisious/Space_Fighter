@@ -8,12 +8,10 @@ import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipControlle
  *
  * @author Dynisious 14/10/2015
  * @version 0.0.1
- * @param <E> The type of ShipEntity this Listener listens on.
  */
-public interface ShipEntityEventListener<E extends ShipEntity>
-        extends EntityEventListener {
+public interface ShipEntityEventListener extends EntityEventListener {
 
-    public void handleShipControllerSetEvent(final E ship,
-                                             final ShipController<E> controller);
+    public void handleShipControllerSetEvent(final ShipEntity ship,
+                                             final ShipController controller);
 
 }

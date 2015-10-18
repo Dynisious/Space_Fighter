@@ -1,18 +1,18 @@
 package space_fighter_test_3d.gameWorld.entities.ships.builders;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.ships.CivilianShip;
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
 
-public class CivilianShipBuilder extends ShipEntityBuilder<CivilianShip, ShipController<CivilianShip>> {
+public class CivilianShipBuilder extends ShipEntityBuilder<CivilianShip, ShipController> {
 
     /**
      * <p>
      * Creates a new CivilianShipBuilder with the passed values.</p>
      *
      * @param mass                     The mass of produced CivilianShips.
-     * @param vertexes                 The vertexes which make up produced
+     * @param triangles                The Triangles which make up produced
      *                                 CivilianShips.
      * @param location                 The location of produced CivilianShips in
      *                                 3D space.
@@ -38,7 +38,8 @@ public class CivilianShipBuilder extends ShipEntityBuilder<CivilianShip, ShipCon
      * @param maxTorquesIncrement      The maximum values for torquesIncrement.
      */
     public CivilianShipBuilder(final String typeName, final double mass,
-                               final Point3D[] vertexes, final FPoint3D location,
+                               final Triangle[] triangles,
+                               final FPoint3D location,
                                final FPoint3D rotation, final FPoint3D velocity,
                                final FPoint3D rotaionalSpeed,
                                final FPoint3D linearForces,
@@ -49,7 +50,7 @@ public class CivilianShipBuilder extends ShipEntityBuilder<CivilianShip, ShipCon
                                final FPoint3D maxLinearForcesIncrement,
                                final FPoint3D torquesIncrement,
                                final FPoint3D maxTorquesIncrement) {
-        super(typeName, mass, vertexes, location, rotation, velocity,
+        super(typeName, mass, triangles, location, rotation, velocity,
                 rotaionalSpeed, linearForces, maxMagnituidLinearForces, torques,
                 maxMagnituidTorques, linearForcesIncrement,
                 maxLinearForcesIncrement, torquesIncrement, maxTorquesIncrement);
@@ -61,17 +62,22 @@ public class CivilianShipBuilder extends ShipEntityBuilder<CivilianShip, ShipCon
     }
 
     @Override
-    public CivilianShip build(ShipController<CivilianShip>... arguments) {
+    public CivilianShip build(ShipController... arguments) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public CivilianShip build(final ShipController<CivilianShip> controller) {
-        return new CivilianShip(this, mass, vertexes, location, rotation,
-                velocity, rotationalSpeed, linearForces,
-                maxMagnituidLinearForces, torques, maxMagnituidTorques,
-                linearForcesIncrement, maxLinearForcesIncrement,
-                torquesIncrement, maxTorquesIncrement, controller);
+    public CivilianShip build(final ShipController controller) {
+        final Triangle[] nTriangles = new Triangle[triangles.length];
+        for (int i = 0; i < triangles.length; i++) {
+            nTriangles[i] = triangles[i].copy();
+        }
+        return new CivilianShip(this, mass, nTriangles, location.copy(),
+                rotation.copy(), velocity.copy(), rotationalSpeed.copy(),
+                linearForces.copy(), maxMagnituidLinearForces.copy(), torques
+                .copy(), maxMagnituidTorques.copy(), linearForcesIncrement
+                .copy(), maxLinearForcesIncrement.copy(), torquesIncrement
+                .copy(), maxTorquesIncrement.copy(), controller);
     }
 
 }

@@ -1,7 +1,5 @@
 package space_fighter_test_3d.gameWorld;
 
-import dynutils.linkedlist.sorted.LinkedIDListNode;
-import dynutils.linkedlist.sorted.WeakLinkedIDListNode;
 import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
 /**
  * <p>
@@ -12,28 +10,17 @@ import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
  * @version 0.0.1
  * @param <ObjectType> The type of objects stored inside this Environment.
  */
-public class Environment<ObjectType extends PhysicsObject> {
-    private final WeakLinkedIDListNode<ObjectType> objectList;
-    public WeakLinkedIDListNode<ObjectType> getObjectList() {
-        return (WeakLinkedIDListNode<ObjectType>) objectList;
-    }
+public class Environment {
+    public final PhysicsObject[] objectList;
 
     /**
      * <p>
      * Creates a new Environment instance with the passed values.</p>
      *
-     * @param objectList The linked list of objects which are a part in this
-     *                   Environment.
+     * @param objectList The PhysicsObjects in this Environment.
      */
-    public Environment(final LinkedIDListNode<ObjectType> objectList) {
-        LinkedIDListNode<ObjectType> head;
-        head = this.objectList = new WeakLinkedIDListNode<>(
-                objectList.getValue());
-        for (LinkedIDListNode<ObjectType> node = objectList.getNextNode();
-                node != null; node = objectList.getNextNode()) {
-            head = new WeakLinkedIDListNode<ObjectType>(node.getValue())
-                    .insertAhead(head);
-        }
+    public Environment(final PhysicsObject[] objectList) {
+        this.objectList = objectList;
     }
 
 }

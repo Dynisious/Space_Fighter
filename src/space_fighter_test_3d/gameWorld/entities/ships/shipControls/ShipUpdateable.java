@@ -1,6 +1,4 @@
 package space_fighter_test_3d.gameWorld.entities.ships.shipControls;
-
-import space_fighter_test_3d.gameWorld.entities.ships.ShipEntity;
 /**
  * <p>
  * A ShipUpdateable is a ShipController that is intended to be run in a
@@ -8,9 +6,8 @@ import space_fighter_test_3d.gameWorld.entities.ships.ShipEntity;
  *
  * @author Dynisious 06/10/2015
  * @version 0.0.1
- * @param <E>
  */
-public class ShipUpdateable<E extends ShipEntity> extends ShipController<E> {
+public class ShipUpdateable extends ShipController {
     public int state; //The current state of this ShipUpdateable.
 
     /**

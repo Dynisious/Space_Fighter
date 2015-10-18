@@ -2,7 +2,8 @@ package space_fighter_test_3d.global.graphics;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
-import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 import space_fighter_test_3d.global.Application;
 import space_fighter_test_3d.global.events.GlobalEvents;
@@ -10,7 +11,6 @@ import space_fighter_test_3d.global.events.GlobalEventListener;
 import space_fighter_test_3d.logging.ErrorLogger;
 import space_fighter_test_3d.logging.EventLogger;
 import space_fighter_test_3d.logging.MessageLogger;
-import dynutils.linkedlist.sorted.StrongLinkedIDListNode;
 /**
  * <p>
  * The GraphicsModule is responsible for rendering the games graphics frame by
@@ -31,8 +31,8 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
     }
     //<editor-fold defaultstate="collapsed" desc="Getting and Adding new Renderables">
     private final Semaphore renderablesQueueSemaphore = new Semaphore(0);
-    private StrongLinkedIDListNode<Renderable> renderableQueue;
-    private final long[] renderableActiveIDs;
+    private ArrayDeque<Renderable> renderableQueue;
+    private final ArrayList<Renderable> activeRenderables;
     /**
      * <p>
      * Returns an array of Objects: {Graphics2D, Renderable}.</p>
@@ -45,15 +45,12 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
     private Object[] dequeueRenderable() throws InterruptedException {
         renderablesQueueSemaphore.acquire();
         synchronized (renderableQueue) {
-            synchronized (renderableActiveIDs) {
+            synchronized (activeRenderables) {
                 synchronized (strategy) {
-                    final StrongLinkedIDListNode<Renderable> toRender = renderableQueue;
-                    renderableQueue = (StrongLinkedIDListNode<Renderable>) renderableQueue.getNextNode();
-                    toRender.removeFromList();
-                    renderableActiveIDs[graphicsThreads.length - 1] = toRender.getValueID();
-                    Arrays.sort(renderableActiveIDs);
-                    return new Object[]{strategy.getDrawGraphics(),
-                        toRender.getValue()};
+                    final Renderable toRender = renderableQueue.pop();
+                    activeRenderables.add(toRender);
+                    activeRenderables.sort(toRender);
+                    return new Object[]{strategy.getDrawGraphics(), toRender};
                 }
             }
         }
@@ -66,18 +63,14 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
      */
     public void queueRenderable(final Renderable renderable) {
         synchronized (renderableQueue) {
-            StrongLinkedIDListNode node = renderableQueue;
-            while (node.getNextNode() != null) {
-                node = (StrongLinkedIDListNode) node.getNextNode();
-            }
-            new StrongLinkedIDListNode<>(renderable).insertAhead(node);
+            renderableQueue.add(renderable);
             renderablesQueueSemaphore.release();
         }
     }
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Manage rendered Renderables">
-    private StrongLinkedIDListNode<Renderable> readyRenderablesQueue;
-    private final Semaphore readyRenderablesQueueSemaphore = new Semaphore(0);
+    private ArrayList<Renderable> renderedRenderables;
+    private final Semaphore renderedRenderablesSemaphore = new Semaphore(0);
     /**
      * <p>
      * Signals the rendering thread that a new Graphics is ready to display.</p>
@@ -85,13 +78,10 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
      * @param toRender The Renderable now ready to render.
      */
     private void renderableReady(final Renderable toRender) {
-        synchronized (readyRenderablesQueue) {
-            StrongLinkedIDListNode node = readyRenderablesQueue;
-            while (node.getValueID() > toRender.getID()) {
-                node = (StrongLinkedIDListNode) node.getNextNode();
-            }
-            new StrongLinkedIDListNode<>(toRender).insertAhead(node);
-            readyRenderablesQueueSemaphore.release();
+        synchronized (renderedRenderables) {
+            renderedRenderables.add(toRender);
+            renderedRenderables.sort(toRender);
+            renderedRenderablesSemaphore.release();
         }
     }
     //</editor-fold>
@@ -104,10 +94,10 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
      */
     public GraphicsModule(final int graphicsThreadCount) {
         this.graphicsThreads = new GraphicsThread[graphicsThreadCount];
-        this.renderableActiveIDs = new long[graphicsThreadCount];
+        this.activeRenderables = new ArrayList<>(graphicsThreadCount);
+        this.renderedRenderables = new ArrayList<>(graphicsThreadCount);
         for (int i = 0; i < graphicsThreads.length; i++) {
             graphicsThreads[i] = new GraphicsThread(i);
-            renderableActiveIDs[i] = Long.MAX_VALUE;
         }
         setName("GraphicsModule");
     }
@@ -128,21 +118,16 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
     public void run() {
         while (Application.applicationAlive) {
             try {
-                readyRenderablesQueueSemaphore.acquire(); //A new Renderable is ready to show.
-                int renderCount = 0;
-                synchronized (readyRenderablesQueue) {
-                    synchronized (renderableActiveIDs) {
-                        while (renderableActiveIDs[0]
-                                == readyRenderablesQueue.getValueID()) { //This is the oldest renderable.
+                renderedRenderablesSemaphore.acquire(); //A new Renderable is ready to show.
+                synchronized (renderedRenderables) {
+                    synchronized (activeRenderables) {
+                        while (renderedRenderables.get(0).equals(
+                                activeRenderables.get(0))) { //The proper frame is ready to render.
                             synchronized (strategy) {
                                 strategy.show();
                             }
-                            renderableActiveIDs[0] = Long.MAX_VALUE;
-                            Arrays.sort(renderableActiveIDs);
-                            final StrongLinkedIDListNode node = readyRenderablesQueue;
-                            readyRenderablesQueue = readyRenderablesQueue.getNextNode();
-                            node.removeFromList();
-                            renderCount++;
+                            activeRenderables.remove(0);
+                            renderedRenderables.remove(0);
                         }
                     }
                 }
@@ -199,7 +184,8 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
                     try {
                         final Graphics2D g; //The Graphics2D to render on.
                         {
-                            final Object[] obj = GraphicsModule.this.dequeueRenderable();
+                            final Object[] obj = GraphicsModule.this
+                                    .dequeueRenderable();
                             g = (Graphics2D) obj[0];
                             toRender = (Renderable) obj[1];
                         }
@@ -232,25 +218,10 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
                 }
             } finally {
                 if (toRender != null) {
-                    synchronized (readyRenderablesQueue) {
-                        synchronized (renderableActiveIDs) {
-                            StrongLinkedIDListNode<Renderable> node = readyRenderablesQueue;
-                            if (renderableActiveIDs[0] == toRender.getID()) {
-                                renderableActiveIDs[0] = Long.MAX_VALUE;
-                                Arrays.sort(renderableActiveIDs);
-                                readyRenderablesQueue = node.getNextNode();
-                                node.removeFromList();
-                            } else {
-                                for (int i = 0; i < renderableActiveIDs.length;
-                                        i++, node = node.getNextNode()) {
-                                    if (renderableActiveIDs[i] == toRender.getID()) {
-                                        renderableActiveIDs[i] = Long.MAX_VALUE;
-                                        Arrays.sort(renderableActiveIDs);
-                                        node.removeFromList();
-                                        break;
-                                    }
-                                }
-                            }
+                    synchronized (renderedRenderables) {
+                        synchronized (activeRenderables) {
+                            activeRenderables.remove(toRender);
+                            renderedRenderables.remove(toRender);
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 package space_fighter_test_3d.gameWorld.entities.builders;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.EntityObject;
 import space_fighter_test_3d.gameWorld.physics.builders.PhysicsObjectBuilder;
 /**
@@ -42,7 +42,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
      * Creates a new EntityObjectBuilder with the passed values.</p>
      *
      * @param mass                     The mass of produced EntityObjects.
-     * @param vertexes                 The vertexes which make up produced
+     * @param triangles                The triangles which make up produced
      *                                 EntityObjects.
      * @param location                 The location of produced EntiyObject in
      *                                 3D space.
@@ -62,7 +62,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
      * @param maxMagnituidTorques      The maximum values for torques.
      */
     protected EntityObjectBuilder(final String typeName, final double mass,
-                                  final Point3D[] vertexes,
+                                  final Triangle[] triangles,
                                   final FPoint3D location,
                                   final FPoint3D rotation,
                                   final FPoint3D velocity,
@@ -71,7 +71,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
                                   final FPoint3D maxMagnituidLinearForces,
                                   final FPoint3D torques,
                                   final FPoint3D maxMagnituidTorques) {
-        super(typeName, mass, vertexes, location, rotation, velocity,
+        super(typeName, mass, triangles, location, rotation, velocity,
                 rotationalSpeed);
         this.linearForces = linearForces;
         this.maxMagnituidLinearForces = maxMagnituidLinearForces;

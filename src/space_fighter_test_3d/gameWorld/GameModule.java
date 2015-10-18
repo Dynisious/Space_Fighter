@@ -17,7 +17,7 @@ import space_fighter_test_3d.logging.MessageLogger;
  */
 public final class GameModule
         implements GlobalEventListener, ApplicationEventListener {
-    private int currentStateID = FreeFlightStateModule.ID; //The current GameStateModule being run.
+    private GameStateModule currentState = FreeFlightStateModule.instance; //The current GameStateModule being run.
 
     @Override
     public void handleApplicationClosingEvent(final int reason) {
@@ -27,12 +27,12 @@ public final class GameModule
     @Override
     public void handleGameTickEvent() {
         try {
-            currentStateID = GameStateModule.getGameState(currentStateID).update();
+            currentState = currentState.update();
         } catch (final Exception ex) {
             final String message = "ERROR : There was a catastrophic error in the game loop.";
             ErrorLogger.write(message, 1, ex, true);
             EventLogger.write(message, 1, false,
-                    "Current state=" + currentStateID);
+                    "Current state=" + currentState);
             GlobalEvents.fireApplicationClosingEvent(
                     GlobalEvents.AppClose_Break_In_Game_Loop);
         } finally {

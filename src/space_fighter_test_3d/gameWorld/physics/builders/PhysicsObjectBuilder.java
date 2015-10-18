@@ -1,11 +1,9 @@
 package space_fighter_test_3d.gameWorld.physics.builders;
 
-import dynutils.linkedlist.sorted.StrongLinkedIDListNode;
 import java.util.ArrayList;
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Builder;
-import space_fighter_test_3d.gameWorld.entities.builders.EntityObjectBuilder;
 import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
 /**
  * <p>
@@ -20,30 +18,15 @@ import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
  */
 public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
         extends Builder<Physics, Arg> {
-    private static int nextID = 0;
-    private static synchronized int getNextID() {
-        return nextID++;
-    }
-    private final int ID = getNextID(); //The individual identifying code of
-    @Override
-    public final long getID() {
-        return ID;
-    }
     public static final PhysicsObjectBuilder[] getPhysicsObjectBuildersByTypeName(
             final String typeName) {
-        final ArrayList<EntityObjectBuilder> foundBuilders = new ArrayList<>();
-        StrongLinkedIDListNode node = allBuilders;
-        while (node != null) {
-            if (EntityObjectBuilder.class.isInstance(node.getValue())) {
-                if (((EntityObjectBuilder) node.getValue()).getTypeName()
-                        .equalsIgnoreCase(typeName)) {
-                    foundBuilders.add((EntityObjectBuilder) node.getValue());
-                }
-            }
-            node = (StrongLinkedIDListNode) node.getNextNode();
+        final ArrayList<PhysicsObjectBuilder> foundBuilders = new ArrayList<>();
+        for (final Builder builder : getAllBuilders()) {
+            if (builder instanceof PhysicsObjectBuilder)
+                foundBuilders.add((PhysicsObjectBuilder) builder);
         }
         return foundBuilders.toArray(
-                new EntityObjectBuilder[foundBuilders.size()]);
+                new PhysicsObjectBuilder[foundBuilders.size()]);
     }
     protected String typeName;
     public String getTypeName() {
@@ -56,9 +39,9 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
     public void setMass(final double mass) {
         this.mass = mass;
     }
-    protected Point3D[] vertexes; //The vertexes that make up this PhysicsObject.
-    public void setVertexes(final Point3D[] vertexes) {
-        this.vertexes = vertexes;
+    protected Triangle[] triangles; //The Triangles that make up this PhysicsObject.
+    public void setTriangles(Triangle[] triangles) {
+        this.triangles = triangles;
     }
     protected FPoint3D location; //The location of the PhysicsObject in 3D space.
     public void setLocation(final FPoint3D location) {
@@ -83,7 +66,7 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
      *
      * @param typeName       The name of this type of PhysicsObject.
      * @param mass           The mass of produced PhysicsObjects.
-     * @param vertexes       The vertexes that make up produced PhysicsObjects.
+     * @param triangles      The triangles that make up produced PhysicsObjects.
      * @param location       The location of produced PhysicsObjects.
      * @param rotation       The rotation of produced PhysicsObjects around each
      *                       axis.
@@ -92,14 +75,14 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
      *                       around each of their axis.
      */
     protected PhysicsObjectBuilder(final String typeName, final double mass,
-                                   final Point3D[] vertexes,
+                                   final Triangle[] triangles,
                                    final FPoint3D location,
                                    final FPoint3D rotation,
                                    final FPoint3D velocity,
                                    final FPoint3D rotaionalSpeed) {
         this.typeName = typeName;
         this.mass = mass;
-        this.vertexes = vertexes;
+        this.triangles = triangles;
         this.location = location;
         this.rotation = rotation;
         this.velocity = velocity;

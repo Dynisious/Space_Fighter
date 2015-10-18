@@ -1,9 +1,8 @@
 package space_fighter_test_3d.gameWorld.entities;
 
-import space_fighter_test_3d.gameWorld.entities.ships.events.EntityEventListener;
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
 import softEngine3D.matrixes.TransformationMatrix;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Environment;
 import space_fighter_test_3d.gameWorld.entities.builders.EntityObjectBuilder;
 import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
@@ -14,12 +13,8 @@ import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
  *
  * @author Dynisious 06/10/2015
  * @version 0.0.1
- * @param <EntityListener> The type of EntityEventListener on this EntityObject.
- * @param <Enviro>         The type of Environment which is used in update
- *                         events.
  */
-public abstract class EntityObject<EntityListener extends EntityEventListener, Enviro extends Environment>
-        extends PhysicsObject<EntityListener, Enviro> {
+public abstract class EntityObject extends PhysicsObject {
     protected FPoint3D linearForces; //The current linear forces on this
     //EntityObject along each axis.
     public FPoint3D getLinearForces() {
@@ -46,7 +41,7 @@ public abstract class EntityObject<EntityListener extends EntityEventListener, E
      * @param builder                  The EntityObjectBuilder which produced
      *                                 this EntityObject.
      * @param mass                     The mass of this EntityObject.
-     * @param vertexes                 The vertexes which make up this
+     * @param triangles                The triangles which make up this
      *                                 EntityObject.
      * @param location                 The location of this EntiyObject in 3D
      *                                 space.
@@ -64,25 +59,27 @@ public abstract class EntityObject<EntityListener extends EntityEventListener, E
      * @param maxMagnituidTorques      The maximum values for torques.
      */
     protected EntityObject(final EntityObjectBuilder builder, final double mass,
-                           final Point3D[] vertexes, final FPoint3D location,
+                           final Triangle[] triangles, final FPoint3D location,
                            final FPoint3D rotation,
                            final FPoint3D rotationalSpeed,
                            final FPoint3D velocity, final FPoint3D linearForces,
                            final FPoint3D maxMagnituidLinearForces,
                            final FPoint3D torques,
                            final FPoint3D maxMagnituidTorques) {
-        super(builder, mass, vertexes, location, rotation, velocity,
+        super(builder, mass, triangles, location, rotation, velocity,
                 rotationalSpeed);
         this.linearForces = linearForces;
         this.maxMagnituidLinearForces = maxMagnituidLinearForces;
         this.torques = torques;
         this.maxMagnituidTorques = maxMagnituidTorques;
     }
+
     @Override
-    public void firePhysicsObjectUpdateEvent(Enviro environment) {
+    public void firePhysicsObjectUpdateEvent(Environment environment) {
         synchronized (valuesLock) {
-            final TransformationMatrix rot = TransformationMatrix.produceTransMatrix(
-                    rotation, new FPoint3D());
+            final TransformationMatrix rot = TransformationMatrix
+                    .produceTransMatrix(
+                            rotation, new FPoint3D());
             velocity = velocity.addition(rot.multiplication(
                     linearForces.multiplication(1 / mass)));
             rotationalSpeed = rotationalSpeed.addition(

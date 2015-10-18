@@ -8,12 +8,10 @@ import space_fighter_test_3d.gameWorld.entities.ships.events.ShipEntityEventList
  *
  * @author Dynisious 06/10/2015
  * @version 0.0.1
- * @param <E> The type of EntityShip that this ShipController controls.
  */
-public abstract class ShipController<E extends ShipEntity>
-        implements ShipEntityEventListener<E> {
-    private E ship;
-    protected E getShip() {
+public abstract class ShipController implements ShipEntityEventListener {
+    private ShipEntity ship;
+    protected ShipEntity getShip() {
         if (ship != null) {
             synchronized (ship) {
                 return ship;
@@ -36,8 +34,8 @@ public abstract class ShipController<E extends ShipEntity>
     }
 
     @Override
-    public void handleShipControllerSetEvent(final E ship,
-                                             final ShipController<E> controller) {
+    public void handleShipControllerSetEvent(final ShipEntity ship,
+                                             final ShipController controller) {
         clearShip();
         this.ship = ship;
     }

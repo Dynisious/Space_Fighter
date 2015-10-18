@@ -1,7 +1,7 @@
 package space_fighter_test_3d.gameWorld.entities.ships.builders;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.builders.EntityObjectBuilder;
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
 import space_fighter_test_3d.gameWorld.entities.ships.ShipEntity;
@@ -16,7 +16,7 @@ import space_fighter_test_3d.gameWorld.entities.ships.ShipEntity;
  *                     built by
  *                     this Builder.
  */
-public abstract class ShipEntityBuilder<Ship extends ShipEntity, Controller extends ShipController<Ship>>
+public abstract class ShipEntityBuilder<Ship extends ShipEntity, Controller extends ShipController>
         extends EntityObjectBuilder<Ship, Controller> {
     protected FPoint3D linearForcesIncrement; //The linear forces of this ShipEntity along
     //each axis relative to the ships orientaion.
@@ -42,7 +42,7 @@ public abstract class ShipEntityBuilder<Ship extends ShipEntity, Controller exte
      * Creates a new ShipEntityBuilder with the passed values.</p>
      *
      * @param mass                     The mass of produced ShipEntitys.
-     * @param vertexes                 The vertexes which make up produced
+     * @param triangles                The Triangles which make up produced
      *                                 ShipEntitys.
      * @param location                 The location of produced ShipEntitys in
      *                                 3D space.
@@ -68,7 +68,7 @@ public abstract class ShipEntityBuilder<Ship extends ShipEntity, Controller exte
      * @param maxTorquesIncrement      The maximum values for torquesIncrement.
      */
     protected ShipEntityBuilder(final String typeName, final double mass,
-                                final Point3D[] vertexes,
+                                final Triangle[] triangles,
                                 final FPoint3D location, final FPoint3D rotation,
                                 final FPoint3D velocity,
                                 final FPoint3D rotationalSpeed,
@@ -80,7 +80,7 @@ public abstract class ShipEntityBuilder<Ship extends ShipEntity, Controller exte
                                 final FPoint3D maxLinearForcesIncrement,
                                 final FPoint3D torquesIncrement,
                                 final FPoint3D maxTorquesIncrement) {
-        super(typeName, mass, vertexes, location, rotation, velocity,
+        super(typeName, mass, triangles, location, rotation, velocity,
                 rotationalSpeed, linearForces, maxMagnituidLinearForces, torques,
                 maxMagnituidTorques);
         this.linearForcesIncrement = linearForcesIncrement;

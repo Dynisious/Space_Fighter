@@ -1,8 +1,7 @@
 package space_fighter_test_3d.gameWorld.entities.ships;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.matrixes.Point3D;
-import space_fighter_test_3d.gameWorld.Environment;
+import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.ships.builders.ShipEntityBuilder;
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
 /**
@@ -13,7 +12,7 @@ import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipControlle
  * @author Dynisious 06/10/2015
  * @version 0.0.1
  */
-public class CivilianShip extends ShipEntity<CivilianShip, ShipController<CivilianShip>, Environment<CivilianShip>> {
+public class CivilianShip extends ShipEntity {
 
     /**
      * <p>
@@ -22,7 +21,7 @@ public class CivilianShip extends ShipEntity<CivilianShip, ShipController<Civili
      * @param builder                  The CivilianShipBuilder which produced
      *                                 this CivilianShip.
      * @param mass                     The mass of this CivilianShip.
-     * @param vertexes                 The vertexes which make up this
+     * @param triangles                The vertexes which make up this
      *                                 CivilianShip.
      * @param location                 The location of this CivilianShip in 3D
      *                                 space.
@@ -46,7 +45,7 @@ public class CivilianShip extends ShipEntity<CivilianShip, ShipController<Civili
      * @param controller               The ShipController for this CivilianShip.
      */
     public CivilianShip(final ShipEntityBuilder builder, final double mass,
-                        final Point3D[] vertexes, final FPoint3D location,
+                        final Triangle[] triangles, final FPoint3D location,
                         final FPoint3D rotation, final FPoint3D velocity,
                         final FPoint3D rotationalSpeed,
                         final FPoint3D linearForces,
@@ -57,8 +56,8 @@ public class CivilianShip extends ShipEntity<CivilianShip, ShipController<Civili
                         final FPoint3D maxLinearForcesIncrement,
                         final FPoint3D torquesIncrement,
                         final FPoint3D maxTorquesIncrement,
-                        final ShipController<CivilianShip> controller) {
-        super(builder, mass, vertexes, location, rotation, velocity,
+                        final ShipController controller) {
+        super(builder, mass, triangles, location, rotation, velocity,
                 rotationalSpeed, linearForces, maxMagnituidLinearForces,
                 linearForcesIncrement, maxLinearForcesIncrement, torques,
                 maxMagnituidTorques, torquesIncrement, maxTorquesIncrement,
