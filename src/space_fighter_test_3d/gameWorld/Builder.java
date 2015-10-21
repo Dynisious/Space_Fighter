@@ -1,6 +1,6 @@
 package space_fighter_test_3d.gameWorld;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 /**
  * <p>
  * A base class for all builders.</p>
@@ -11,13 +11,13 @@ import java.util.ArrayList;
  * @param <Arg>        The type of arguments passed into the Build function.
  */
 public abstract class Builder<ObjectType, Arg> {
-    private static ArrayList<Builder> allBuilders;
-    protected static ArrayList<Builder> getAllBuilders() {
+    private static LinkedHashSet<Builder> allBuilders;
+    protected static LinkedHashSet<Builder> getAllBuilders() {
         return allBuilders;
     }
     public static final void addNewBuilder(final Builder builder) {
         if (allBuilders == null) {
-            allBuilders = new ArrayList<>();
+            allBuilders = new LinkedHashSet<>();
         }
         allBuilders.add(builder);
     }

@@ -1,7 +1,6 @@
 package space_fighter_test_3d.global;
 
-import space_fighter_test_3d.global.events.GlobalEvents;
-import space_fighter_test_3d.global.events.ApplicationEventListener;
+import space_fighter_test_3d.global.events.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,23 +20,25 @@ import space_fighter_test_3d.gameWorld.entities.ships.events.PlayerControllerEve
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.PlayerController;
 import space_fighter_test_3d.gameWorld.gameStates.FreeFlightStateModule;
 import dynutils.events.EventObject;
-import java.util.ArrayList;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
 import space_fighter_test_3d.global.events.GlobalEventListener;
 import space_fighter_test_3d.logging.ErrorLogger;
 import space_fighter_test_3d.logging.EventLogger;
 import space_fighter_test_3d.logging.MessageLogger;
 import java.util.EventListener;
 import java.util.LinkedList;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.EntityObject;
+import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipUpdateable;
 import space_fighter_test_3d.gameWorld.physics.builders.PhysicsObjectBuilder;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * Being ambitious and going to try and get a space dogfight game running in a
  * 3D space.</p>
  *
  * @author Dynisious 05/10/2015
- * @version 0.0.1
+ * @version 1.0.1
  */
 public class Application extends EventObject<ApplicationEventListener>
         implements GlobalEventListener {
@@ -50,20 +51,6 @@ public class Application extends EventObject<ApplicationEventListener>
     private Timer tick;
 
     public Application(final int graphicsThreadCount) {
-        MessageLogger.write("Initialising All Game Modules...", 1, true);
-        {
-            MessageLogger.write("Initialising Free Flight Module...", 7, true);
-            FreeFlightStateModule.instance = new FreeFlightStateModule(
-                    new LinkedList<>());
-            FreeFlightStateModule.instance.entityList.add(
-                    (EntityObject) PhysicsObjectBuilder
-                    .getPhysicsObjectBuildersByTypeName("Dynisious")[0]
-                    .build(PlayerController.initInstance()));
-        }
-        MessageLogger.write("Initialising Main Game Module...", 1, true);
-        gameModule = new GameModule();
-        GlobalEvents.instance.addListener(gameModule);
-        this.addListener(gameModule);
 
         MessageLogger.write("Initialising Graphics Module...", 1, true);
         graphicsModule = new GraphicsModule(graphicsThreadCount);
@@ -73,6 +60,29 @@ public class Application extends EventObject<ApplicationEventListener>
         mainForm = new MainForm(graphicsThreadCount, graphicsModule);
         GlobalEvents.instance.addListener(mainForm);
         PlayerControllerEvents.setMainForm(mainForm);
+
+        MessageLogger.write("Initialising All Game Modules...", 1, true);
+        {
+            MessageLogger.write("Initialising Free Flight Module...", 7, true);
+            FreeFlightStateModule.instance = new FreeFlightStateModule(
+                    new LinkedList<>());
+            FreeFlightStateModule.instance.entityList.add(
+                    (EntityObject) PhysicsObjectBuilder
+                    .getPhysicsObjectBuildersByTypeName("Dynisious")[0]
+                    .build(PlayerController.initInstance()));
+            final CivilianShipBuilder builder = (CivilianShipBuilder) PhysicsObjectBuilder
+                    .getPhysicsObjectBuildersByTypeName("Dynisious")[0];
+            for (int i = 0; i < 3; i++) {
+                builder.setLocation(new FPoint3D(300 * Math.random(),
+                        300 * Math.random(), 300 * Math.random()));
+                FreeFlightStateModule.instance.entityList.add(builder.build(
+                        new ShipUpdateable(i)));
+            }
+        }
+        MessageLogger.write("Initialising Main Game Module...", 1, true);
+        gameModule = new GameModule(graphicsModule);
+        GlobalEvents.instance.addListener(gameModule);
+        this.addListener(gameModule);
 
         GlobalEvents.instance.addListener(MessageLogger.getInstance());
         GlobalEvents.instance.addListener(EventLogger.getInstance());
@@ -86,6 +96,8 @@ public class Application extends EventObject<ApplicationEventListener>
      * @param period The milliseconds between each tick.
      */
     public void startTick(final long period) {
+        if (tick != null)
+            tick.cancel();
         tick = new Timer("Timer Tick");
         tick.schedule(new TimerTask() {
 
@@ -94,7 +106,7 @@ public class Application extends EventObject<ApplicationEventListener>
                 fireGameTickEvent();
             }
 
-        }, 0, period);
+        }, period, period);
     }
 
     /**
@@ -275,18 +287,34 @@ public class Application extends EventObject<ApplicationEventListener>
                     System.out.println("Loading Ships...");
                     int shipsLoaded = 0;
                     int shipsToLoad = 0;
-                    for (final String ship : new File(properties.getProperty(
-                            "app.entities.ships")).list()) {
-                        if (!ship.equalsIgnoreCase("COPY ME-Template.ship")) {
+                    for (final File ship : new File(properties.getProperty(
+                            "app.entities.ships")).listFiles()) {
+                        if (ship.isDirectory()) {
                             shipsToLoad++;
                             final Properties shipFile = new Properties();
                             try {
                                 shipFile.load(new FileInputStream(
-                                        properties.getProperty(
-                                                "app.entities.ships") + ship));
+                                        ship.getAbsolutePath() + "/"
+                                        + ship.getName() + ".ship"));
                                 //<editor-fold defaultstate="collapsed" desc="Set Builder settings.">
                                 //<editor-fold defaultstate="collapsed" desc="Get Builder values.">
-                                String cls = shipFile.getProperty("type.class");
+                                CollisionMesh collisionMesh;
+                                try (final FileInputStream collisionFile = new FileInputStream(
+                                        ship.getAbsolutePath() + "/"
+                                        + ship.getName() + ".physics")) {
+                                    final byte[] bytes = new byte[collisionFile
+                                            .available()]; //The byte[] to read the file to.
+                                    collisionFile.read(bytes);
+                                    collisionFile.close();
+                                    collisionMesh = CollisionMesh
+                                            .getDeserialiser().deserialise(
+                                                    ByteBuffer.wrap(bytes));
+                                } catch (IOException ex) {
+                                    throw new FileNotFoundException("The "
+                                            + ship.getName() + ".physics file either did not exist or was corrupt.");
+                                }
+                                String cls = shipFile.getProperty(
+                                        "type.class");
                                 if (cls == null) {
                                     throw new NoPropertiesFieldException(
                                             "ERROR : There was an error getting the type.class value.",
@@ -301,70 +329,26 @@ public class Application extends EventObject<ApplicationEventListener>
                                 }
                                 double mass;
                                 try {
-                                    mass = Double.valueOf(shipFile.getProperty(
-                                            "mass"));
+                                    mass = Double.valueOf(shipFile
+                                            .getProperty(
+                                                    "mass"));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
                                     throw new NoPropertiesFieldException(
                                             "ERROR : There was an error getting the mass value.",
                                             ex);
                                 }
-                                int triangleCount;
-                                try {
-                                    triangleCount = Integer.valueOf(
-                                            shipFile.getProperty(
-                                                    "triangle.count"));
-                                } catch (final NullPointerException |
-                                        NumberFormatException ex) {
-                                    throw new NoPropertiesFieldException(
-                                            "ERROR : There was an error getting the triangle.count value.",
-                                            ex);
-                                }
-                                final Triangle[] triangles = new Triangle[triangleCount];
-                                //<editor-fold defaultstate="collapsed" desc="Get Triangles">
-                                final ArrayList<FPoint3D> vertexes = new ArrayList<>(
-                                        triangleCount);
-                                for (int triangle = 0; triangle < triangleCount; triangle++) {
-                                    try {
-                                        final FPoint3D[] points = new FPoint3D[3];
-                                        for (int point = 0; point < 3; point++) {
-                                            points[point] = new FPoint3D(Integer
-                                                    .valueOf(shipFile
-                                                            .getProperty(
-                                                                    "triangle" + triangle + "p" + point + ".x")),
-                                                    Integer.valueOf(
-                                                            shipFile
-                                                            .getProperty(
-                                                                    "triangle" + triangle + "p" + point + ".y")),
-                                                    Integer.valueOf(
-                                                            shipFile
-                                                            .getProperty(
-                                                                    "triangle" + triangle + "p" + point + ".z")));
-                                            for (final FPoint3D p : vertexes) {
-                                                if (p.equals(points[point])) {
-                                                    points[point] = p;
-                                                }
-                                            }
-                                            triangles[triangle] = new Triangle(
-                                                    points[0], points[2],
-                                                    points[3], false);
-                                        }
-                                    } catch (final NullPointerException |
-                                            NumberFormatException ex) {
-                                        throw new NoPropertiesFieldException(
-                                                "ERROR : There was an error getting the triangle"
-                                                + triangle + " value.", ex);
-                                    }
-                                }
-                                //</editor-fold>
                                 FPoint3D linearForces = null;
                                 try {
                                     linearForces = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForces.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForces.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForces.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -375,11 +359,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D velocity = null;
                                 try {
                                     velocity = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initVelocity.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initVelocity.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initVelocity.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -390,11 +377,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D maxMagnituidTorques = null;
                                 try {
                                     maxMagnituidTorques = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorques.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorques.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorques.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -405,11 +395,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D torques = null;
                                 try {
                                     torques = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorques.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorques.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorques.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -420,11 +413,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D maxMagnituidLinearForces = null;
                                 try {
                                     maxMagnituidLinearForces = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForces.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForces.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForces.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -435,11 +431,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D rotation = null;
                                 try {
                                     rotation = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotation.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotation.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotation.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -450,11 +449,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D location = null;
                                 try {
                                     location = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLocation.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLocation.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLocation.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -465,11 +467,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D linearForcesIncrement = null;
                                 try {
                                     linearForcesIncrement = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForcesIncrement.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForcesIncrement.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initLinearForcesIncrement.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -480,11 +485,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D maxLinearForcesIncrement = null;
                                 try {
                                     maxLinearForcesIncrement = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForcesIncrement.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForcesIncrement.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxLinearForcesIncrement.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -495,11 +503,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D torquesIncrement = null;
                                 try {
                                     torquesIncrement = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorquesIncrement.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorquesIncrement.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initTorquesIncrement.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -510,11 +521,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D maxTorquesIncrement = null;
                                 try {
                                     maxTorquesIncrement = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorquesIncrement.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorquesIncrement.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initMaxTorquesIncrement.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -525,11 +539,14 @@ public class Application extends EventObject<ApplicationEventListener>
                                 FPoint3D rotationalSpeed = null;
                                 try {
                                     rotationalSpeed = new FPoint3D(
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotationalSpeed.x")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotationalSpeed.y")),
-                                            Double.valueOf(shipFile.getProperty(
+                                            Double.valueOf(shipFile
+                                                    .getProperty(
                                                             "initRotationalSpeed.z")));
                                 } catch (final NullPointerException |
                                         NumberFormatException ex) {
@@ -540,20 +557,24 @@ public class Application extends EventObject<ApplicationEventListener>
                                 //</editor-fold>
                                 if (cls.equalsIgnoreCase("civilian")) {
                                     if (!typeName.isEmpty()) {
-                                        EntityObjectBuilder.addNewBuilder(
-                                                new CivilianShipBuilder(typeName,
-                                                        mass, triangles,
-                                                        location, rotation,
-                                                        velocity,
-                                                        rotationalSpeed,
-                                                        linearForces,
-                                                        maxMagnituidLinearForces,
-                                                        torques,
-                                                        maxMagnituidTorques,
-                                                        linearForcesIncrement,
-                                                        maxLinearForcesIncrement,
-                                                        torquesIncrement,
-                                                        maxTorquesIncrement));
+                                        EntityObjectBuilder
+                                                .addNewBuilder(
+                                                        new CivilianShipBuilder(
+                                                                typeName,
+                                                                mass,
+                                                                collisionMesh,
+                                                                location,
+                                                                rotation,
+                                                                velocity,
+                                                                rotationalSpeed,
+                                                                linearForces,
+                                                                maxMagnituidLinearForces,
+                                                                torques,
+                                                                maxMagnituidTorques,
+                                                                linearForcesIncrement,
+                                                                maxLinearForcesIncrement,
+                                                                torquesIncrement,
+                                                                maxTorquesIncrement));
                                     } else {
                                         throw new NoSuchFieldException(
                                                 "ERROR : No invalid type.name value in file '" + ship + "'");
@@ -564,13 +585,16 @@ public class Application extends EventObject<ApplicationEventListener>
                                 }
                                 //</editor-fold>
                                 shipsLoaded++;
-                            } catch (final IOException | NumberFormatException |
-                                    NullPointerException | NoSuchFieldException |
+                            } catch (final IOException |
+                                    NumberFormatException |
+                                    NullPointerException |
+                                    NoSuchFieldException |
                                     NoPropertiesFieldException ex) {
-                                System.out.print(ErrorLogger.formatMessage(
-                                        "ERROR : There was an error loading the ship '"
-                                        + ship + "'; it will not be used in instance of the game.",
-                                        4, ex));
+                                System.out.print(ErrorLogger
+                                        .formatMessage(
+                                                "ERROR : There was an error loading the ship '"
+                                                + ship + "'; it will not be used in instance of the game.",
+                                                4, ex));
                             }
                         }
                     }
@@ -627,7 +651,7 @@ public class Application extends EventObject<ApplicationEventListener>
             final String[] line = scan.nextLine().split(" ");
             if ("help".equalsIgnoreCase(line[0])) {
                 System.out.println(
-                        "help               : Displays all commands.\r\n"
+                        "help             : Displays all commands.\r\n"
                         + "stop             : Closes the application.\r\n"
                         + "set tick <value> : Sets the milliseconds between update ticks.");
             } else if (line[0].equalsIgnoreCase("stop")) {

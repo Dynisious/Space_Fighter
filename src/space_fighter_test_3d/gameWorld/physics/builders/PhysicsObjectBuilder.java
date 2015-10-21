@@ -1,10 +1,12 @@
 package space_fighter_test_3d.gameWorld.physics.builders;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import softEngine3D.matrixes.FPoint3D;
+import softEngine3D.objects.Object3D;
 import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Builder;
 import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * A Builder which constructs PhysicsObjects.</p>
@@ -20,13 +22,45 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
         extends Builder<Physics, Arg> {
     public static final PhysicsObjectBuilder[] getPhysicsObjectBuildersByTypeName(
             final String typeName) {
-        final ArrayList<PhysicsObjectBuilder> foundBuilders = new ArrayList<>();
+        final LinkedList<PhysicsObjectBuilder> foundBuilders = new LinkedList<>();
         for (final Builder builder : getAllBuilders()) {
             if (builder instanceof PhysicsObjectBuilder)
-                foundBuilders.add((PhysicsObjectBuilder) builder);
+                if (((PhysicsObjectBuilder) builder).typeName
+                        .equalsIgnoreCase(typeName))
+                    foundBuilders.add((PhysicsObjectBuilder) builder);
         }
         return foundBuilders.toArray(
                 new PhysicsObjectBuilder[foundBuilders.size()]);
+    }
+    protected Object3D model = new Object3D(
+            new FPoint3D(), new FPoint3D(), new Triangle[]{
+                new Triangle(
+                        new FPoint3D(0, 0, 50),
+                        new FPoint3D(20, 0, 0),
+                        new FPoint3D(0, 7.5, 0), false),
+                new Triangle(
+                        new FPoint3D(0, 0, 50),
+                        new FPoint3D(-20, 0, 0),
+                        new FPoint3D(0, 7.5, 0), false),
+                new Triangle(
+                        new FPoint3D(0, 0, 50),
+                        new FPoint3D(20, 0, 0),
+                        new FPoint3D(0, -7.5, 0), false),
+                new Triangle(
+                        new FPoint3D(20, 0, 0),
+                        new FPoint3D(-20, 0, 0),
+                        new FPoint3D(0, 7.5, 0), false),
+                new Triangle(
+                        new FPoint3D(20, 0, 0),
+                        new FPoint3D(-20, 0, 0),
+                        new FPoint3D(0, -7.5, 0), false),
+                new Triangle(
+                        new FPoint3D(0, 0, 50),
+                        new FPoint3D(-20, 0, 0),
+                        new FPoint3D(0, -7.5, 0), false)
+            }, Integer.MAX_VALUE);
+    public Object3D getModel() {
+        return model;
     }
     protected String typeName;
     public String getTypeName() {
@@ -39,9 +73,9 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
     public void setMass(final double mass) {
         this.mass = mass;
     }
-    protected Triangle[] triangles; //The Triangles that make up this PhysicsObject.
-    public void setTriangles(Triangle[] triangles) {
-        this.triangles = triangles;
+    protected CollisionMesh collisionMesh; //The CollisionMesh which represents the phyiscal object.
+    public void setCollisionMesh(final CollisionMesh collisionMesh) {
+        this.collisionMesh = collisionMesh;
     }
     protected FPoint3D location; //The location of the PhysicsObject in 3D space.
     public void setLocation(final FPoint3D location) {
@@ -66,7 +100,8 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
      *
      * @param typeName       The name of this type of PhysicsObject.
      * @param mass           The mass of produced PhysicsObjects.
-     * @param triangles      The triangles that make up produced PhysicsObjects.
+     * @param collisionMesh  The CollisionMesh that make up produced
+     *                       PhysicsObjects.
      * @param location       The location of produced PhysicsObjects.
      * @param rotation       The rotation of produced PhysicsObjects around each
      *                       axis.
@@ -75,14 +110,14 @@ public abstract class PhysicsObjectBuilder<Physics extends PhysicsObject, Arg>
      *                       around each of their axis.
      */
     protected PhysicsObjectBuilder(final String typeName, final double mass,
-                                   final Triangle[] triangles,
+                                   final CollisionMesh collisionMesh,
                                    final FPoint3D location,
                                    final FPoint3D rotation,
                                    final FPoint3D velocity,
                                    final FPoint3D rotaionalSpeed) {
         this.typeName = typeName;
         this.mass = mass;
-        this.triangles = triangles;
+        this.collisionMesh = collisionMesh;
         this.location = location;
         this.rotation = rotation;
         this.velocity = velocity;

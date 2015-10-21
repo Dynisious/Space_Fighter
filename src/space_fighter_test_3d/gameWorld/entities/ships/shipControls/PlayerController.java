@@ -10,17 +10,25 @@ import space_fighter_test_3d.gameWorld.entities.ships.events.PlayerControllerEve
  * @author Dynisious 07/10/2015
  * @version 0.0.1
  */
-public final class PlayerController extends ShipController implements
-        KeyListener {
+public final class PlayerController extends ShipController
+        implements KeyListener {
+    private static PlayerController instance;
+    public static PlayerController getInstance() {
+        return initInstance();
+    }
 
     /**
      * @return The new PlayerController.
      */
     public static final PlayerController initInstance() {
-        final PlayerController controller = new PlayerController();
-        PlayerControllerEvents.getInstance().addListener(controller);
-        PlayerControllerEvents.setAsKeyListener(controller);
-        return controller;
+        if (instance == null) {
+            final PlayerController controller = new PlayerController();
+            PlayerControllerEvents.getInstance().addListener(controller);
+            PlayerControllerEvents.setAsKeyListener(controller);
+            instance = controller;
+            return controller;
+        }
+        return instance;
     }
 
     private PlayerController() {
@@ -29,8 +37,8 @@ public final class PlayerController extends ShipController implements
     public static Object[][] keys = new Object[][]{
         {KeyEvent.VK_W, true},
         {KeyEvent.VK_S, true},
-        {KeyEvent.VK_A, true},
         {KeyEvent.VK_D, true},
+        {KeyEvent.VK_A, true},
         {KeyEvent.VK_SHIFT, true},
         {KeyEvent.VK_CONTROL, true},
         {KeyEvent.VK_NUMPAD6, true},
@@ -176,6 +184,7 @@ public final class PlayerController extends ShipController implements
         {
             if (getShip() != null) {
                 synchronized (getShip().valuesLock) {
+                    //<editor-fold defaultstate="collapsed" desc="Movement Keys">
                     if ((Boolean) keys[0][1] && (Boolean) keys[1][1]) {
                         if (Math.abs(getShip().getLinearForces().z) > Math.abs(
                                 getShip().getLinearForcesIncrement().z)) {
@@ -218,6 +227,7 @@ public final class PlayerController extends ShipController implements
                                     .getLinearForces().y = 0;
                         }
                     }
+                    //</editor-fold>
                     if ((Boolean) keys[6][1] && (Boolean) keys[7][1]) {
                         if (Math.abs(getShip().getTorques().y) > Math.abs(
                                 getShip().getTorquesIncrement().y)) {

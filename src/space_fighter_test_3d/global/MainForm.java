@@ -103,6 +103,8 @@ public class MainForm extends JFrame implements GlobalEventListener {
         setSize(Toolkit.getDefaultToolkit().getScreenSize());
         setLayout(null);
         setLocationRelativeTo(null);
+        g.camera.drawOffsetX = getWidth() >>> 1;
+        g.camera.drawOffsetY = getHeight() >>> 1;
     }
 
     @Override

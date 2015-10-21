@@ -11,7 +11,7 @@ import space_fighter_test_3d.gameWorld.entities.ships.events.ShipEntityEventList
  */
 public abstract class ShipController implements ShipEntityEventListener {
     private ShipEntity ship;
-    protected ShipEntity getShip() {
+    public ShipEntity getShip() {
         if (ship != null) {
             synchronized (ship) {
                 return ship;

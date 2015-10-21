@@ -3,10 +3,10 @@ package space_fighter_test_3d.gameWorld.physics;
 import dynutils.events.EventObject;
 import java.util.EventListener;
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Environment;
 import space_fighter_test_3d.gameWorld.events.PhysicsObjectListener;
 import space_fighter_test_3d.gameWorld.physics.builders.PhysicsObjectBuilder;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 import space_fighter_test_3d.global.Application;
 /**
  * <p>
@@ -14,7 +14,7 @@ import space_fighter_test_3d.global.Application;
  * physics physics.</p>
  *
  * @author Dynisious 16/10/2015
- * @version 0.0.1
+ * @version 0.1.1
  */
 public abstract class PhysicsObject {
     public final Object valuesLock = new Object(); //An Object to lock on when
@@ -39,9 +39,9 @@ public abstract class PhysicsObject {
     public double getMass() {
         return mass;
     }
-    protected Triangle[] physicsObj; //The Triangles that make up this PhysicsObject.
-    public Triangle[] getPhysicsObj() {
-        return physicsObj;
+    protected CollisionMesh collisionMesh; //The CollisionMesh that represents the phyiscal object.
+    public CollisionMesh getCollisionMesh() {
+        return collisionMesh;
     }
     protected FPoint3D location; //The location of the PhysicsObject in 3D space.
     public FPoint3D getLocation() {
@@ -67,7 +67,8 @@ public abstract class PhysicsObject {
      * @param builder         The PhysicsObjectBuilder which produced this
      *                        PhysicsObject.
      * @param mass            The mass of this PhysicsObject.
-     * @param triangles       The Triangles that make up this PhysicsObject.
+     * @param collisionMesh   The CollisionMesh which represents this physical
+     *                        object.
      * @param location        The location of this PhysicsObject.
      * @param rotation        The rotation of this PhysicsObject around each
      *                        axis.
@@ -76,13 +77,13 @@ public abstract class PhysicsObject {
      *                        each of it's axis.
      */
     protected PhysicsObject(final PhysicsObjectBuilder builder,
-                            final double mass, final Triangle[] triangles,
+                            final double mass, final CollisionMesh collisionMesh,
                             final FPoint3D location, final FPoint3D rotation,
                             final FPoint3D velocity,
                             final FPoint3D rotationalSpeed) {
         this.builder = builder;
         this.mass = mass;
-        this.physicsObj = triangles;
+        this.collisionMesh = collisionMesh;
         this.location = location;
         this.rotation = rotation;
         this.velocity = velocity;
@@ -98,7 +99,13 @@ public abstract class PhysicsObject {
      * @param environment The current environment.
      */
     private void checkCollisions(final Environment environment) {
-        throw new UnsupportedOperationException("Method not implemented yet.");
+        for (final PhysicsObject physicsObject : environment.objectList)
+            if (physicsObject.location.subtraction(location).getMagnituid()
+                    < (collisionMesh.getMaxCollisionDistance()
+                    + physicsObject.getCollisionMesh().getMaxCollisionDistance())) //It is possible for the two meshes to be colliding.
+                if (collisionMesh.checkCollision(physicsObject
+                        .getCollisionMesh())) //The two meshes are colliding.
+                    fireCollisionEvent();
     }
 
     /**

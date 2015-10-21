@@ -1,10 +1,15 @@
 package space_fighter_test_3d.global.graphics;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
+import softEngine3D.matrixes.FPoint3D;
+import softEngine3D.objects.Camera;
 import space_fighter_test_3d.global.Application;
 import space_fighter_test_3d.global.events.GlobalEvents;
 import space_fighter_test_3d.global.events.GlobalEventListener;
@@ -63,8 +68,11 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
      */
     public void queueRenderable(final Renderable renderable) {
         synchronized (renderableQueue) {
-            renderableQueue.add(renderable);
-            renderablesQueueSemaphore.release();
+            if (renderableQueue.size() < graphicsThreads.length
+                    && activeRenderables.size() < graphicsThreads.length) {
+                renderableQueue.add(renderable);
+                renderablesQueueSemaphore.release();
+            }
         }
     }
     //</editor-fold>
@@ -85,6 +93,9 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
         }
     }
     //</editor-fold>
+    public Camera camera = new Camera(new FPoint3D(), new FPoint3D(), 20000,
+            Toolkit.getDefaultToolkit().getScreenSize().width >> 1,
+            Toolkit.getDefaultToolkit().getScreenSize().height >> 1, 300);
 
     /**
      * <p>
@@ -94,6 +105,7 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
      */
     public GraphicsModule(final int graphicsThreadCount) {
         this.graphicsThreads = new GraphicsThread[graphicsThreadCount];
+        this.renderableQueue = new ArrayDeque<>(graphicsThreadCount);
         this.activeRenderables = new ArrayList<>(graphicsThreadCount);
         this.renderedRenderables = new ArrayList<>(graphicsThreadCount);
         for (int i = 0; i < graphicsThreads.length; i++) {
@@ -119,10 +131,10 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
         while (Application.applicationAlive) {
             try {
                 renderedRenderablesSemaphore.acquire(); //A new Renderable is ready to show.
-                synchronized (renderedRenderables) {
-                    synchronized (activeRenderables) {
-                        while (renderedRenderables.get(0).equals(
-                                activeRenderables.get(0))) { //The proper frame is ready to render.
+                synchronized (activeRenderables) {
+                    synchronized (renderedRenderables) {
+                        if (renderedRenderables.get(0)
+                                == activeRenderables.get(0)) { //The proper frame is ready to render.
                             synchronized (strategy) {
                                 strategy.show();
                             }
@@ -165,6 +177,7 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
             }
         }
         MessageLogger.write("Graphics Module now closed", 1, true);
+
     }
 
     private final class GraphicsThread extends Thread {
@@ -189,7 +202,12 @@ public final class GraphicsModule extends Thread implements GlobalEventListener 
                             g = (Graphics2D) obj[0];
                             toRender = (Renderable) obj[1];
                         }
-                        toRender.render(g);
+                        synchronized (camera) {
+                            g.setColor(Color.WHITE);
+                            g.fill(new Rectangle(Toolkit.getDefaultToolkit()
+                                    .getScreenSize()));
+                            toRender.render(g, camera);
+                        }
                         renderableReady(toRender);
                     } catch (final InterruptedException ex) {
                         final String message = "ERROR : The Thread was interupted while waiting for a new frame.";

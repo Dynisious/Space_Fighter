@@ -1,9 +1,9 @@
 package space_fighter_test_3d.gameWorld.entities.ships;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.ships.builders.ShipEntityBuilder;
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * A CivilianShip is a CivilianShip which is only capable of flying, nothing
@@ -21,7 +21,7 @@ public class CivilianShip extends ShipEntity {
      * @param builder                  The CivilianShipBuilder which produced
      *                                 this CivilianShip.
      * @param mass                     The mass of this CivilianShip.
-     * @param triangles                The vertexes which make up this
+     * @param collisionMesh            The CollisionMesh which makes up this
      *                                 CivilianShip.
      * @param location                 The location of this CivilianShip in 3D
      *                                 space.
@@ -45,9 +45,9 @@ public class CivilianShip extends ShipEntity {
      * @param controller               The ShipController for this CivilianShip.
      */
     public CivilianShip(final ShipEntityBuilder builder, final double mass,
-                        final Triangle[] triangles, final FPoint3D location,
-                        final FPoint3D rotation, final FPoint3D velocity,
-                        final FPoint3D rotationalSpeed,
+                        final CollisionMesh collisionMesh,
+                        final FPoint3D location, final FPoint3D rotation,
+                        final FPoint3D velocity, final FPoint3D rotationalSpeed,
                         final FPoint3D linearForces,
                         final FPoint3D maxMagnituidLinearForces,
                         final FPoint3D torques,
@@ -57,7 +57,7 @@ public class CivilianShip extends ShipEntity {
                         final FPoint3D torquesIncrement,
                         final FPoint3D maxTorquesIncrement,
                         final ShipController controller) {
-        super(builder, mass, triangles, location, rotation, velocity,
+        super(builder, mass, collisionMesh, location, rotation, velocity,
                 rotationalSpeed, linearForces, maxMagnituidLinearForces,
                 linearForcesIncrement, maxLinearForcesIncrement, torques,
                 maxMagnituidTorques, torquesIncrement, maxTorquesIncrement,

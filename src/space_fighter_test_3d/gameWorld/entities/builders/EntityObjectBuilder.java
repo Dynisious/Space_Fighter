@@ -1,9 +1,9 @@
 package space_fighter_test_3d.gameWorld.entities.builders;
 
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.entities.EntityObject;
 import space_fighter_test_3d.gameWorld.physics.builders.PhysicsObjectBuilder;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * Base class for EntityBuilders which are capable of producing different types
@@ -42,7 +42,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
      * Creates a new EntityObjectBuilder with the passed values.</p>
      *
      * @param mass                     The mass of produced EntityObjects.
-     * @param triangles                The triangles which make up produced
+     * @param collisionMesh            The CollisionMesh which makes up produced
      *                                 EntityObjects.
      * @param location                 The location of produced EntiyObject in
      *                                 3D space.
@@ -62,7 +62,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
      * @param maxMagnituidTorques      The maximum values for torques.
      */
     protected EntityObjectBuilder(final String typeName, final double mass,
-                                  final Triangle[] triangles,
+                                  final CollisionMesh collisionMesh,
                                   final FPoint3D location,
                                   final FPoint3D rotation,
                                   final FPoint3D velocity,
@@ -71,7 +71,7 @@ public abstract class EntityObjectBuilder<Entity extends EntityObject, Arg>
                                   final FPoint3D maxMagnituidLinearForces,
                                   final FPoint3D torques,
                                   final FPoint3D maxMagnituidTorques) {
-        super(typeName, mass, triangles, location, rotation, velocity,
+        super(typeName, mass, collisionMesh, location, rotation, velocity,
                 rotationalSpeed);
         this.linearForces = linearForces;
         this.maxMagnituidLinearForces = maxMagnituidLinearForces;

@@ -2,10 +2,10 @@ package space_fighter_test_3d.gameWorld.entities;
 
 import softEngine3D.matrixes.FPoint3D;
 import softEngine3D.matrixes.TransformationMatrix;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Environment;
 import space_fighter_test_3d.gameWorld.entities.builders.EntityObjectBuilder;
 import space_fighter_test_3d.gameWorld.physics.PhysicsObject;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * An EntityObject is the base class of any object which is meant to exist in
@@ -41,8 +41,8 @@ public abstract class EntityObject extends PhysicsObject {
      * @param builder                  The EntityObjectBuilder which produced
      *                                 this EntityObject.
      * @param mass                     The mass of this EntityObject.
-     * @param triangles                The triangles which make up this
-     *                                 EntityObject.
+     * @param collisionMesh            The CollisionMesh which make up produced
+     *                                 EntityObjects.
      * @param location                 The location of this EntiyObject in 3D
      *                                 space.
      * @param rotation                 The rotation around each axis of this
@@ -59,14 +59,14 @@ public abstract class EntityObject extends PhysicsObject {
      * @param maxMagnituidTorques      The maximum values for torques.
      */
     protected EntityObject(final EntityObjectBuilder builder, final double mass,
-                           final Triangle[] triangles, final FPoint3D location,
-                           final FPoint3D rotation,
+                           final CollisionMesh collisionMesh,
+                           final FPoint3D location, final FPoint3D rotation,
                            final FPoint3D rotationalSpeed,
                            final FPoint3D velocity, final FPoint3D linearForces,
                            final FPoint3D maxMagnituidLinearForces,
                            final FPoint3D torques,
                            final FPoint3D maxMagnituidTorques) {
-        super(builder, mass, triangles, location, rotation, velocity,
+        super(builder, mass, collisionMesh, location, rotation, velocity,
                 rotationalSpeed);
         this.linearForces = linearForces;
         this.maxMagnituidLinearForces = maxMagnituidLinearForces;
@@ -78,8 +78,7 @@ public abstract class EntityObject extends PhysicsObject {
     public void firePhysicsObjectUpdateEvent(Environment environment) {
         synchronized (valuesLock) {
             final TransformationMatrix rot = TransformationMatrix
-                    .produceTransMatrix(
-                            rotation, new FPoint3D());
+                    .produceTransMatrixRotate(rotation);
             velocity = velocity.addition(rot.multiplication(
                     linearForces.multiplication(1 / mass)));
             rotationalSpeed = rotationalSpeed.addition(

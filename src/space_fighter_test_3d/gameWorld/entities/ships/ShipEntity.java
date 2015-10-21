@@ -2,20 +2,18 @@ package space_fighter_test_3d.gameWorld.entities.ships;
 
 import java.util.EventListener;
 import softEngine3D.matrixes.FPoint3D;
-import softEngine3D.objects.Triangle;
 import space_fighter_test_3d.gameWorld.Environment;
 import space_fighter_test_3d.gameWorld.entities.EntityObject;
 import space_fighter_test_3d.gameWorld.entities.ships.builders.ShipEntityBuilder;
 import space_fighter_test_3d.gameWorld.entities.ships.events.ShipEntityEventListener;
 import space_fighter_test_3d.gameWorld.entities.ships.shipControls.ShipController;
+import space_fighter_test_3d.gameWorld.physics.geometry.CollisionMesh;
 /**
  * <p>
  * ShipEntities are craft which fly through 3D space.</p>
  *
  * @author Dynisious 06/10/2015
  * @version 0.0.1
- * @param <Controller> The Type of ShipController to be stored in this
- *                     ShipEntity.
  */
 public abstract class ShipEntity extends EntityObject {
     protected FPoint3D linearForcesIncrement; //The linear forces of this ShipEntity along
@@ -44,7 +42,7 @@ public abstract class ShipEntity extends EntityObject {
      * @param builder                  The ShipEntityBuilder which produced
      *                                 this ShipEntity.
      * @param mass                     The mass of this ShipEntity.
-     * @param triangles                The vertexes which make up this
+     * @param collisionMesh            The CollisionMesg which make up this
      *                                 ShipEntity.
      * @param location                 The location of this ShipEntity in 3D
      *                                 space.
@@ -68,9 +66,9 @@ public abstract class ShipEntity extends EntityObject {
      * @param controller               the value of controller
      */
     protected ShipEntity(final ShipEntityBuilder builder, final double mass,
-                         final Triangle[] triangles, final FPoint3D location,
-                         final FPoint3D rotation, final FPoint3D velocity,
-                         final FPoint3D rotationalSpeed,
+                         final CollisionMesh collisionMesh,
+                         final FPoint3D location, final FPoint3D rotation,
+                         final FPoint3D velocity, final FPoint3D rotationalSpeed,
                          final FPoint3D linearForces,
                          final FPoint3D maxMagnituidLinearForces,
                          final FPoint3D linearForcesIncrement,
@@ -80,7 +78,7 @@ public abstract class ShipEntity extends EntityObject {
                          final FPoint3D torquesIncrement,
                          final FPoint3D maxTorquesIncrement,
                          final ShipController controller) {
-        super(builder, mass, triangles, location, rotation, velocity,
+        super(builder, mass, collisionMesh, location, rotation, velocity,
                 rotationalSpeed, linearForces, maxMagnituidLinearForces, torques,
                 maxMagnituidTorques);
         this.linearForcesIncrement = linearForcesIncrement;

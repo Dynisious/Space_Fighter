@@ -50,6 +50,11 @@ public final class GlobalEvents extends EventObject<GlobalEventListener> {
      * There was an error while executing the game loop.</p>
      */
     public static final int AppClose_Break_In_Game_Loop = 5;
+    /**
+     * <p>
+     * A restart command was entered.</p>
+     */
+    public static final int AppClose_Restart_Command = 0;
 
     /**
      * <p>
